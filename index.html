@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ TYPE MASTER ULTRA 2026 ⚡</title>
+    <meta name="description" content="Мультиплеєрна гра на набір слів та пошук емодзі. Змагайся з друзями в реальному часі!" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="game.css">
+</head>
+<body>
+
+<div class="bg-particles" id="bgParticles"></div>
+
+<audio id="lobbyBgm" src="lobby.mp3" loop></audio>
+<audio id="gameBgm" src="game.mp3" loop></audio>
+
+<div class="audio-control-top">
+    <div id="wsStatus" class="ws-status">
+        <span id="wsDot" class="ws-dot ws-disconnected"></span>
+        <span id="wsLabel">Відключено</span>
+    </div>
+    <button class="music-btn muted" id="bgmBtn" onclick="toggleBGM()">🔇 Музика ВИМК</button>
+</div>
+
+<div class="countdown-overlay" id="countdownOverlay" style="display:none;">
+    <div class="countdown-number" id="countdownNumber">3</div>
+    <div class="countdown-label">ПРИГОТУЙСЯ</div>
+</div>
+
+<div class="game-container" id="gameBox">
+
+    <div id="menuScreen">
+        <h1>🛸 Type Master</h1>
+        <p class="subtitle">Ultra Multi-Arena Edition 2026</p>
+        <div class="input-group">
+            <label>👤 Ваш нікнейм</label>
+            <input type="text" id="nicknameInput" placeholder="😎 Введіть ваше ім'я" maxlength="12">
+        </div>
+        <div class="input-group">
+            <label>🎮 Режим гри</label>
+            <div class="mode-selector">
+                <button class="mode-btn active" id="modeType" onclick="setGameMode('typing')">⌨️ Набір слів</button>
+                <button class="mode-btn" id="modeSearch" onclick="setGameMode('search')">🔍 Знайти емодзі</button>
+            </div>
+        </div>
+        <div class="menu-buttons">
+            <button class="btn" onclick="onCreateLobby()">➕ Створити кімнату</button>
+            <button class="btn btn-secondary" onclick="showScreen('joinScreen')">🔑 Приєднатись за кодом</button>
+        </div>
+    </div>
+
+    <div id="joinScreen" style="display:none;">
+        <h1>🧩 Приєднатись до гри</h1>
+        <p class="subtitle">Введіть 4-значний код від хоста</p>
+        <div class="input-group" style="margin-top: 30px;">
+            <label>Код кімнати</label>
+            <input type="text" id="roomCodeInput" placeholder="0000" maxlength="4" style="font-size: 2.8rem; letter-spacing: 10px;">
+        </div>
+        <div class="menu-buttons">
+            <button class="btn" onclick="onJoinLobbySubmit()">🚀 Увійти до лобі</button>
+            <button class="btn btn-secondary" onclick="showScreen('menuScreen')">↩ Назад</button>
+        </div>
+    </div>
+
+    <div id="lobbyScreen" style="display:none;">
+        <div class="room-code-panel">
+            <div style="font-size: 0.78rem; text-transform: uppercase; font-weight: 700; color: #404070; letter-spacing: 2px; margin-bottom: 4px;">📌 КОД ГРИ</div>
+            <div class="room-code-tag" id="lobbyCodeDisplay">0000</div>
+            <div id="lobbyModeDisplay" style="color: var(--cyan); margin-top: 6px; font-weight: 700; font-size: 0.9rem; letter-spacing: 1px; text-transform: uppercase;"></div>
+        </div>
+        <h2 style="font-size: 1.2rem; color: #6060a0; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px;">Гравці підключені</h2>
+        <div class="kahoot-lobby-grid" id="playersListContainer"></div>
+        <div class="menu-buttons" style="margin-top: 32px;">
+            <button class="btn btn-start" id="hostStartBtn" style="display:none;" onclick="hostBroadcastStart()">🎬 Почати гру!</button>
+            <p id="clientWaitText" style="color: var(--cyan); display:none; font-weight: 800; font-size: 1.1rem; animation: pulse 1.5s infinite; letter-spacing: 1px;">⏳ Очікуємо початку...</p>
+            <button class="btn btn-secondary" onclick="leaveLobby()">❌ Покинути кімнату</button>
+        </div>
+    </div>
+
+    <div id="playScreen" style="display:none;">
+        <div class="game-layout">
+            <div class="main-game-area">
+                <div class="stats-bar">
+                    <div>Раунд <span id="currentRound" style="color: var(--orange);">1</span>/5</div>
+                    <div>⏱ <span id="globalTimer" style="color: var(--red);">2:00</span></div>
+                    <div>Очки <span id="localScoreDisplay" style="color: var(--green);">0</span></div>
+                    <div>Час <span id="timer" style="color: var(--red);">0.0</span>с</div>
+                </div>
+                <div class="round-progress">
+                    <div class="round-progress-fill" id="roundProgressFill" style="width: 20%;"></div>
+                </div>
+                <div class="word-display" id="wordTarget">...</div>
+                <div id="typingEngineZone">
+                    <input type="text" id="userInput" autocomplete="off" placeholder="Набирай якомога швидше! 🔥">
+                </div>
+                <div id="searchEngineZone" style="display:none;">
+                    <div class="hidden-objects-room" id="roomObjectsGrid"></div>
+                </div>
+                <div id="streakZone" style="min-height: 40px; margin-top: 8px;"></div>
+            </div>
+            <div class="live-leaderboard">
+                <div style="font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: #404070; letter-spacing: 1.5px; margin-bottom: 14px;">⚔️ Результати</div>
+                <div id="liveLeaderboardContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="resultScreen" style="display:none;">
+        <h1 style="margin-bottom: 10px;">👑 Чемпіони</h1>
+        <div class="podium-container" id="kahootPodium"></div>
+        <div id="otherPlayersSection" style="margin-top: 36px; display:none;">
+            <table class="results-table">
+                <thead><tr><th>Місце</th><th>Гравець</th><th>Очки</th></tr></thead>
+                <tbody id="finalLeaderboardBody"></tbody>
+            </table>
+        </div>
+        <div class="menu-buttons" style="margin-top: 36px;">
+            <button class="btn" onclick="resetToMenu()">↩ На головну</button>
+        </div>
+    </div>
+
+</div>
+
+<script src="config.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
