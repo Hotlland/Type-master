@@ -3,4 +3,4 @@
 // Наприклад: "wss://typemaster-api.replit.app/api/ws"
 // Залиште порожнім ("") якщо хостите гру на тому ж сервері що і API
 
-window.WS_SERVER_URL = "";
+window.WS_SERVER_URL = "https://ukrainian-typing-race--pvzpva.replit.app/";
